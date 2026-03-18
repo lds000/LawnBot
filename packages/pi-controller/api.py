@@ -12,7 +12,7 @@ from typing import Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from src import database, gpio_controller, mqtt_handler, run_manager, scheduler, state
@@ -262,8 +262,19 @@ async def websocket_status(ws: WebSocket):
 _web_dist_rel = Path(__file__).parent.parent.parent / "web" / "dist"
 _web_dist_abs = Path("/home/lds00/web/dist")
 _web_dist = _web_dist_abs if _web_dist_abs.exists() else _web_dist_rel
+
 if _web_dist.exists():
-    app.mount("/app", StaticFiles(directory=str(_web_dist), html=True), name="web")
+    # Mount static assets (JS, CSS, images) — no html=True so unknown paths don't 404
+    app.mount("/app/assets", StaticFiles(directory=str(_web_dist / "assets")), name="web-assets")
+
+    # Catch-all for SPA: serve index.html for any /app/* route not matched above
+    @app.get("/app/{full_path:path}")
+    async def serve_spa(full_path: str):
+        # Serve real files (favicon, icons, etc.) if they exist
+        candidate = _web_dist / full_path
+        if candidate.exists() and candidate.is_file():
+            return FileResponse(str(candidate))
+        return FileResponse(str(_web_dist / "index.html"))
 
 
 # --- Background tasks (started from main.py) ---
