@@ -1,0 +1,36 @@
+{
+  "device_id": "controller_pi",
+  "mqtt": {
+    "broker_host": "localhost",
+    "broker_port": 1883,
+    "client_id": "lawnbot_controller"
+  },
+  "api": {
+    "host": "0.0.0.0",
+    "port": 8000
+  },
+  "gpio": {
+    "relays": {
+      "Hanging Pots": 17,
+      "Garden": 27,
+      "Misters": 22
+    },
+    "leds": {
+      "system": 5,
+      "hanging_pots": 6,
+      "garden": 13,
+      "misters": 19
+    },
+    "mock": false
+  },
+  "sensor_pi": {
+    "host": "100.117.254.20",
+    "api_port": 8001
+  },
+  "database": {
+    "path": "/home/lds00/lawnbot/lawnbot.db"
+  },
+  "schedule_file": "/home/lds00/lawnbot/sprinkler_schedule.json",
+  "misters_overlap": true,
+  "log_level": "INFO"
+}

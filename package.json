@@ -1,0 +1,16 @@
+{
+  "name": "lawnbot",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "shared"
+  ],
+  "scripts": {
+    "dev:web": "pnpm --filter web dev",
+    "build:web": "pnpm --filter web build",
+    "dev:mobile": "pnpm --filter mobile start",
+    "deploy:controller": "packages/pi-controller/deploy.sh",
+    "deploy:sensor": "packages/pi-sensor/deploy.sh"
+  }
+}

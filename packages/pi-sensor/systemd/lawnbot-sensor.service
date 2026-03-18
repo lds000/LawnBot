@@ -1,0 +1,17 @@
+[Unit]
+Description=LawnBot Sensor API
+After=network.target SensorMonitor.service
+
+[Service]
+Type=simple
+User=lds00
+WorkingDirectory=/home/lds00/ColorSensorTest
+ExecStart=/usr/bin/python3 /home/lds00/ColorSensorTest/api.py
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target

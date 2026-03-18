@@ -1,0 +1,40 @@
+{
+  "start_times": [
+    {
+      "time": "06:00",
+      "enabled": true,
+      "sets": [
+        {
+          "name": "Garden",
+          "duration_minutes": 15,
+          "mode": "normal",
+          "enabled": true
+        },
+        {
+          "name": "Hanging Pots",
+          "duration_minutes": 10,
+          "mode": "pulse_soak",
+          "pulse_minutes": 2,
+          "soak_minutes": 5,
+          "enabled": true
+        },
+        {
+          "name": "Misters",
+          "duration_minutes": 3,
+          "mode": "normal",
+          "enabled": true
+        }
+      ]
+    }
+  ],
+  "schedule_days": [
+    true, false, true, false, true, false, true,
+    false, true, false, true, false, true, false
+  ],
+  "mist_settings": {
+    "enabled": false,
+    "trigger_temp_f": 95.0,
+    "duration_seconds": 60,
+    "check_interval_minutes": 20
+  }
+}

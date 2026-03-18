@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+packages/web/dist/
+
+# Expo
+packages/mobile/.expo/
+packages/mobile/node_modules/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.db-journal
+
+# Temp / diagnostic scripts (root level)
+gpio_test.py
+gpio_sweep.py
+i2c_diag.py
+sensor_diag.py
+fetch_pi_files.py
+
+# Pi extraction artifacts
+pi_extracted/
+pi_files_report.txt
+pi5out.txt
+
+# OS
+.DS_Store
+Thumbs.db
