@@ -55,6 +55,14 @@ export function Sensors() {
   const fp = latest?.flow_pressure?.data ?? latest?.flow_pressure;
   const online = latest?.online ?? false;
 
+  // Normalize field names — sensor Pi uses "temperature", "wind_speed", etc.
+  const tempC: number | null = env?.temperature_c ?? env?.temperature ?? null;
+  const humidity: number | null = env?.humidity_percent ?? env?.humidity ?? null;
+  const windMs: number | null = env?.wind_speed_ms ?? env?.wind_speed ?? null;
+  const windDeg: number | null = env?.wind_direction_deg ?? null;
+  const windCompass: string | null = env?.wind_direction_compass ?? null;
+  const pressurePsi: number | null = fp?.pressure_psi ?? null;
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -69,31 +77,31 @@ export function Sensors() {
         <h2 className="text-sm font-medium text-gray-400 mb-4">Live Readings</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-2">
           <Gauge
-            value={env?.temperature_c != null ? tempCtoF(env.temperature_c) : null}
+            value={tempC != null ? tempCtoF(tempC) : null}
             min={30} max={120} label="Air Temp" unit="°F" color="#f97316"
           />
           <Gauge
-            value={env?.humidity_percent ?? null}
+            value={humidity}
             max={100} label="Humidity" unit="%" color="#38bdf8"
           />
           <Gauge
-            value={fp?.pressure_psi ?? null}
+            value={pressurePsi}
             max={80} label="Pressure" unit="PSI" color="#a78bfa"
           />
           <Gauge
-            value={env?.wind_speed_ms != null ? +(env.wind_speed_ms * 2.237).toFixed(1) : null}
+            value={windMs != null ? +(windMs * 2.237).toFixed(1) : null}
             max={30} label="Wind" unit="mph" color="#34d399"
           />
         </div>
       </div>
 
       {/* Wind direction */}
-      {env?.wind_direction_compass && (
+      {windCompass && (
         <div className="card flex items-center gap-4">
-          <div className="text-4xl font-bold text-gray-300">{env.wind_direction_compass}</div>
+          <div className="text-4xl font-bold text-gray-300">{windCompass}</div>
           <div>
             <div className="text-sm text-gray-400">Wind Direction</div>
-            <div className="text-lg font-semibold">{env.wind_direction_deg?.toFixed(0)}°</div>
+            <div className="text-lg font-semibold">{windDeg?.toFixed(0)}°</div>
           </div>
         </div>
       )}
