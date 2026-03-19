@@ -27,8 +27,16 @@ export function Dashboard({ status, sensors }: DashboardProps) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["status"] }),
   });
 
-  const env = sensors?.environment?.data ?? sensors?.environment;
+  const _envRaw = sensors?.environment?.data ?? sensors?.environment;
   const fp = sensors?.flow_pressure?.data ?? sensors?.flow_pressure;
+  // Normalize field names — sensor Pi uses "temperature" / "wind_speed" (no _c / _ms suffix)
+  const env = _envRaw ? {
+    temperature_c:        _envRaw.temperature_c     ?? _envRaw.temperature     ?? null,
+    humidity_percent:     _envRaw.humidity_percent  ?? _envRaw.humidity        ?? null,
+    wind_speed_ms:        _envRaw.wind_speed_ms     ?? _envRaw.wind_speed      ?? null,
+    wind_direction_deg:   _envRaw.wind_direction_deg   ?? null,
+    wind_direction_compass: _envRaw.wind_direction_compass ?? null,
+  } : null;
   const zones: any[] = status?.zone_states ?? [];
   const current = status?.current_run;
 
