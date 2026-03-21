@@ -49,6 +49,7 @@ async def _execute_run(set_config: dict, run_id: str, is_manual: bool) -> None:
     duration_minutes = float(set_config.get("duration_minutes", 0))
     pulse_minutes = float(set_config.get("pulse_minutes", duration_minutes))
     soak_minutes = float(set_config.get("soak_minutes", 0))
+    flow_rate_lpm = set_config.get("flow_rate_lpm")  # may be None
 
     start_time = datetime.now()
     await database.record_run_start(run_id, zone_name, start_time, is_manual)
@@ -71,7 +72,10 @@ async def _execute_run(set_config: dict, run_id: str, is_manual: bool) -> None:
         await gpio_controller.set_relay(zone_name, False)
         end_time = datetime.now()
         duration_sec = int((end_time - start_time).total_seconds())
-        await database.record_run_end(run_id, end_time, duration_sec)
+        estimated_litres = None
+        if flow_rate_lpm is not None and duration_sec > 0:
+            estimated_litres = round((duration_sec / 60) * float(flow_rate_lpm), 2)
+        await database.record_run_end(run_id, end_time, duration_sec, estimated_litres)
         state.clear_current_run()
         await gpio_controller.set_led(zone_name.lower().replace(" ", "_"), "off")
         log.info(f"Finished {zone_name} | {duration_sec}s elapsed | run_id={run_id}")

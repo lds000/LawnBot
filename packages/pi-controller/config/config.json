@@ -32,5 +32,11 @@
   },
   "schedule_file": "/home/lds00/lawnbot/sprinkler_schedule.json",
   "misters_overlap": true,
-  "log_level": "INFO"
+  "log_level": "INFO",
+  "weather": {
+    "latitude": 43.615,
+    "longitude": -116.202,
+    "timezone": "America/Denver"
+  },
+  "api_token": ""
 }

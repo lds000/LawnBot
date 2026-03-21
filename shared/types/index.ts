@@ -21,6 +21,8 @@ export interface ScheduleSet {
   soak_minutes?: number;
   mode: 'normal' | 'pulse_soak';
   enabled: boolean;
+  flow_rate_lpm?: number | null;
+  soil_moisture_skip_threshold?: number | null;
 }
 
 export interface StartTime {
@@ -33,6 +35,7 @@ export interface Schedule {
   start_times: StartTime[];
   schedule_days: boolean[]; // 14-day rotation
   mist_settings: MistSettings;
+  rain_skip: RainSkipSettings;
 }
 
 export interface MistSettings {
@@ -40,6 +43,11 @@ export interface MistSettings {
   trigger_temp_f: number;
   duration_seconds: number;
   check_interval_minutes: number;
+}
+
+export interface RainSkipSettings {
+  enabled: boolean;
+  threshold_percent: number;
 }
 
 // Current run state
@@ -78,6 +86,7 @@ export interface SystemStatus {
   today_is_watering_day: boolean;
   schedule_day_index: number;
   is_misting: boolean;
+  rain_skip_active: boolean;
   timestamp: string; // ISO
 }
 
@@ -121,9 +130,18 @@ export interface HistoryEntry {
   start_time: string;
   end_time: string;
   duration_seconds: number;
+  estimated_litres: number | null;
   is_manual: boolean;
   run_id: string;
   completed: boolean;
+  skip_reason: string | null;
+}
+
+// Location config
+export interface LocationConfig {
+  latitude: number;
+  longitude: number;
+  timezone: string;
 }
 
 // API request types

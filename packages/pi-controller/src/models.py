@@ -16,6 +16,8 @@ class ScheduleSet(BaseModel):
     soak_minutes: Optional[float] = None
     mode: str = "normal"
     enabled: bool = True
+    flow_rate_lpm: Optional[float] = None
+    soil_moisture_skip_threshold: Optional[float] = None
 
     @field_validator("mode")
     @classmethod
@@ -45,10 +47,16 @@ class MistSettings(BaseModel):
     check_interval_minutes: int = 20
 
 
+class RainSkipSettings(BaseModel):
+    enabled: bool = False
+    threshold_percent: int = 50
+
+
 class Schedule(BaseModel):
     start_times: list[StartTime] = []
     schedule_days: list[bool] = [True] * 14
     mist_settings: MistSettings = MistSettings()
+    rain_skip: RainSkipSettings = RainSkipSettings()
 
     @field_validator("schedule_days")
     @classmethod
@@ -121,6 +129,7 @@ class SystemStatusResponse(BaseModel):
     today_is_watering_day: bool
     schedule_day_index: int
     is_misting: bool
+    rain_skip_active: bool = False
     timestamp: str
 
 
@@ -152,5 +161,19 @@ class HistoryEntry(BaseModel):
     start_time: str
     end_time: Optional[str] = None
     duration_seconds: Optional[int] = None
+    estimated_litres: Optional[float] = None
     is_manual: bool
     completed: bool
+    skip_reason: Optional[str] = None
+
+
+# --- Config models ---
+
+class LocationConfig(BaseModel):
+    latitude: float
+    longitude: float
+    timezone: str = "America/Denver"
+
+
+class LocationUpdateRequest(BaseModel):
+    location: LocationConfig

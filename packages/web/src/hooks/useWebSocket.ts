@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-const WS_URL = `ws://${window.location.hostname}:8000/ws`;
+const WS_URL = `ws://${window.location.hostname === "localhost" ? "100.116.147.6" : window.location.hostname}:8000/ws`;
 
 export type WsStatus = "connecting" | "connected" | "disconnected";
 

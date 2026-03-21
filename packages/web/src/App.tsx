@@ -6,6 +6,7 @@ import { Schedule } from "@/pages/Schedule";
 import { History } from "@/pages/History";
 import { Sensors } from "@/pages/Sensors";
 import { Settings } from "@/pages/Settings";
+import { Weather } from "@/pages/Weather";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { useQuery } from "@tanstack/react-query";
 import { getSensorsLatest } from "@/lib/api";
@@ -24,13 +25,14 @@ function AppInner() {
 
   return (
     <BrowserRouter>
-      <Navbar wsStatus={wsStatus} />
-      <main className="max-w-6xl mx-auto px-4 pt-20 pb-10">
+      <Navbar wsStatus={wsStatus} sensors={sensors} />
+      <main className="max-w-6xl mx-auto px-4 pt-28 pb-10">
         <Routes>
           <Route path="/" element={<Dashboard status={status} sensors={sensors} />} />
           <Route path="/schedule" element={<Schedule />} />
           <Route path="/history" element={<History />} />
           <Route path="/sensors" element={<Sensors />} />
+          <Route path="/weather" element={<Weather />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

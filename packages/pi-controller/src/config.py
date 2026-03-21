@@ -51,6 +51,13 @@ class SensorPiConfig:
 
 
 @dataclass
+class WeatherConfig:
+    latitude: float
+    longitude: float
+    timezone: str
+
+
+@dataclass
 class AppConfig:
     device_id: str
     mqtt: MqttConfig
@@ -61,6 +68,8 @@ class AppConfig:
     schedule_file: str
     misters_overlap: bool
     log_level: str
+    weather: WeatherConfig
+    api_token: str
 
 
 def load_config() -> AppConfig:
@@ -68,6 +77,7 @@ def load_config() -> AppConfig:
     on_pi = _is_raspberry_pi()
     mock = raw["gpio"].get("mock", False) or not on_pi
 
+    weather_raw = raw.get("weather", {})
     return AppConfig(
         device_id=raw["device_id"],
         mqtt=MqttConfig(**raw["mqtt"]),
@@ -82,6 +92,12 @@ def load_config() -> AppConfig:
         schedule_file=raw["schedule_file"],
         misters_overlap=raw.get("misters_overlap", True),
         log_level=raw.get("log_level", "INFO"),
+        weather=WeatherConfig(
+            latitude=weather_raw.get("latitude", 43.615),
+            longitude=weather_raw.get("longitude", -116.202),
+            timezone=weather_raw.get("timezone", "America/Denver"),
+        ),
+        api_token=raw.get("api_token", ""),
     )
 
 

@@ -14,11 +14,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://raspberrypi.local:8000",
+        target: "http://100.116.147.6:8000",
         changeOrigin: true,
       },
       "/ws": {
-        target: "ws://raspberrypi.local:8000",
+        target: "ws://100.116.147.6:8000",
         ws: true,
         changeOrigin: true,
       },

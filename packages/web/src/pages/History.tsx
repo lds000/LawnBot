@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getHistory } from "@/lib/api";
 import { formatDateTime, formatDuration } from "@/lib/utils";
-import { CheckCircle2, XCircle, User, Clock, Droplets, Timer, BarChart3 } from "lucide-react";
+import { CheckCircle2, XCircle, User, Clock, Droplets, Timer, BarChart3, Leaf, CloudRain } from "lucide-react";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis,
   Tooltip, CartesianGrid, Cell,
@@ -72,6 +72,7 @@ export function History() {
   const totalSeconds = items.reduce((s, h) => s + (h.duration_seconds ?? 0), 0);
   const completed = items.filter((h) => h.completed).length;
   const completionRate = totalRuns > 0 ? Math.round((completed / totalRuns) * 100) : 0;
+  const totalLitres = items.reduce((s, h) => s + (h.estimated_litres ?? 0), 0);
 
   const dailyData = buildDailyData(items);
   const zoneData = buildZoneData(items);
@@ -83,10 +84,13 @@ export function History() {
       <h1 className="text-xl font-bold">Watering History</h1>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard label="Total Runs" value={String(totalRuns)} icon={BarChart3} color="#22c55e" />
         <StatCard label="Total Water Time" value={formatDuration(totalSeconds)} icon={Droplets} color="#3b82f6" />
         <StatCard label="Completion Rate" value={`${completionRate}%`} icon={Timer} color="#a78bfa" />
+        {totalLitres > 0 && (
+          <StatCard label="Est. Water Used" value={`${totalLitres.toFixed(1)} L`} icon={Droplets} color="#0ea5e9" />
+        )}
       </div>
 
       {/* Charts */}
@@ -139,6 +143,7 @@ export function History() {
               <th className="text-left px-4 py-3">Zone</th>
               <th className="text-left px-4 py-3">Started</th>
               <th className="text-left px-4 py-3">Duration</th>
+              <th className="text-left px-4 py-3">Est. Litres</th>
               <th className="text-left px-4 py-3">Type</th>
               <th className="text-left px-4 py-3">Status</th>
             </tr>
@@ -149,7 +154,10 @@ export function History() {
                 <td className="px-4 py-3 font-medium">{h.set_name}</td>
                 <td className="px-4 py-3 text-gray-400">{formatDateTime(h.start_time)}</td>
                 <td className="px-4 py-3 text-gray-400">
-                  {h.duration_seconds ? formatDuration(h.duration_seconds) : "—"}
+                  {h.skip_reason ? "—" : h.duration_seconds ? formatDuration(h.duration_seconds) : "—"}
+                </td>
+                <td className="px-4 py-3 text-gray-400">
+                  {h.estimated_litres != null ? `${h.estimated_litres.toFixed(1)} L` : "—"}
                 </td>
                 <td className="px-4 py-3">
                   {h.is_manual ? (
@@ -159,7 +167,11 @@ export function History() {
                   )}
                 </td>
                 <td className="px-4 py-3">
-                  {h.completed ? (
+                  {h.skip_reason === "rain_skip" ? (
+                    <span className="badge-blue"><CloudRain className="w-3 h-3 mr-1" />Rain Skip</span>
+                  ) : h.skip_reason === "soil_moisture" ? (
+                    <span className="badge-gray"><Leaf className="w-3 h-3 mr-1" />Soil Wet</span>
+                  ) : h.completed ? (
                     <span className="badge-green"><CheckCircle2 className="w-3 h-3 mr-1" />Done</span>
                   ) : (
                     <span className="badge-yellow"><XCircle className="w-3 h-3 mr-1" />Interrupted</span>

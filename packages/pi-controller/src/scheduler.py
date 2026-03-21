@@ -126,3 +126,45 @@ def compute_effective_minutes(set_config: dict) -> float:
         return duration
     cycles = max(1, int(duration / pulse))
     return cycles * pulse + max(0, cycles - 1) * soak
+
+
+def should_skip_for_rain(schedule: dict, forecast_data: Optional[dict]) -> bool:
+    """
+    Return True if rain skip is enabled and forecast precipitation probability
+    for today exceeds the configured threshold.
+    """
+    rain_skip = schedule.get("rain_skip", {})
+    if not rain_skip.get("enabled", False):
+        return False
+    if not forecast_data:
+        return False
+    threshold = rain_skip.get("threshold_percent", 50)
+    try:
+        daily = forecast_data.get("daily", {})
+        pop_list = daily.get("precipitation_probability_max", [])
+        if pop_list and pop_list[0] is not None and pop_list[0] >= threshold:
+            log.info(f"Rain skip: {pop_list[0]}% >= {threshold}% threshold")
+            return True
+    except Exception as e:
+        log.warning(f"Rain skip check failed: {e}")
+    return False
+
+
+async def fetch_forecast_for_skip(latitude: float, longitude: float,
+                                   timezone: str) -> Optional[dict]:
+    """Fetch a minimal Open-Meteo forecast for the rain skip check."""
+    try:
+        import urllib.request
+        tz_enc = timezone.replace("/", "%2F")
+        url = (
+            f"https://api.open-meteo.com/v1/forecast"
+            f"?latitude={latitude}&longitude={longitude}"
+            f"&daily=precipitation_probability_max"
+            f"&timezone={tz_enc}&forecast_days=1"
+        )
+        with urllib.request.urlopen(url, timeout=5) as resp:
+            import json as _json
+            return _json.loads(resp.read())
+    except Exception as e:
+        log.warning(f"Forecast fetch failed: {e}")
+        return None

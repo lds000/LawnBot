@@ -1,7 +1,8 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getSensorsLatest, getSensorHistory } from "@/lib/api";
 import { tempCtoF } from "@/lib/utils";
-import { Gauge } from "@/components/Gauge";
+import { SharedDefs, Thermometer, Compass, CircularGauge } from "@/components/Instruments";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
   Tooltip, CartesianGrid
@@ -39,26 +40,40 @@ export function Sensors() {
     refetchInterval: 5000,
   });
 
-  const { data: envHistory = [] } = useQuery({
+  const { data: envHistoryRaw = [] } = useQuery({
     queryKey: ["sensor-history-environment"],
     queryFn: () => getSensorHistory("environment", 60),
     refetchInterval: 30000,
   });
 
-  const { data: flowHistory = [] } = useQuery({
+  const { data: flowHistoryRaw = [] } = useQuery({
     queryKey: ["sensor-history-flow"],
     queryFn: () => getSensorHistory("flow", 60),
     refetchInterval: 30000,
   });
 
+  // Unwrap MQTT envelope: each history record is {recorded_at, seq, device, data: {...}}
+  const envHistory = envHistoryRaw.map((r: any) => {
+    const d = r.data ?? r;
+    return {
+      recorded_at: r.recorded_at,
+      ...d,
+      // pre-convert to °F for the chart
+      temperature_f: d.temperature != null ? +((d.temperature * 9/5) + 32).toFixed(1) : null,
+    };
+  });
+  const flowHistory = flowHistoryRaw.map((r: any) => ({
+    recorded_at: r.recorded_at,
+    ...(r.data ?? r),
+  }));
+
   const env = latest?.environment?.data ?? latest?.environment;
   const fp = latest?.flow_pressure?.data ?? latest?.flow_pressure;
   const online = latest?.online ?? false;
 
-  // Normalize field names — sensor Pi uses "temperature", "wind_speed", etc.
-  const tempC: number | null = env?.temperature_c ?? env?.temperature ?? null;
-  const humidity: number | null = env?.humidity_percent ?? env?.humidity ?? null;
-  const windMs: number | null = env?.wind_speed_ms ?? env?.wind_speed ?? null;
+  const tempC: number | null = env?.temperature ?? null;
+  const humidity: number | null = env?.humidity ?? null;
+  const windMs: number | null = env?.wind_speed ?? null;
   const windDeg: number | null = env?.wind_direction_deg ?? null;
   const windCompass: string | null = env?.wind_direction_compass ?? null;
   const pressurePsi: number | null = fp?.pressure_psi ?? null;
@@ -72,52 +87,48 @@ export function Sensors() {
         </span>
       </div>
 
-      {/* Live gauges */}
+      {/* Shared SVG defs for instruments */}
+      <svg width="0" height="0" style={{ position: "absolute" }}>
+        <SharedDefs />
+      </svg>
+
+      {/* Live instrument gauges — scaled to 55% so all 5 fit in one row */}
       <div className="card">
         <h2 className="text-sm font-medium text-gray-400 mb-4">Live Readings</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 py-2">
-          <Gauge
-            value={tempC != null ? tempCtoF(tempC) : null}
-            min={30} max={120} label="Air Temp" unit="°F" color="#f97316"
-          />
-          <Gauge
-            value={humidity}
-            max={100} label="Humidity" unit="%" color="#38bdf8"
-          />
-          <Gauge
-            value={pressurePsi}
-            max={80} label="Pressure" unit="PSI" color="#a78bfa"
-          />
-          <Gauge
-            value={windMs != null ? +(windMs * 2.237).toFixed(1) : null}
-            max={30} label="Wind" unit="mph" color="#34d399"
-          />
+        <div className="flex flex-wrap justify-center items-start gap-2 py-2">
+          {(
+            [
+              { w: 190, h: 260, title: "Temperature",   el: <Thermometer tempF={tempC != null ? tempCtoF(tempC) : null} compact hideTitle /> },
+              { w: 260, h: 310, title: "Wind Direction", el: <Compass deg={windDeg} label={windCompass ?? (windDeg != null ? `${windDeg.toFixed(0)}°` : "—")} hideTitle /> },
+              { w: 260, h: 310, title: "Wind Speed",     el: <CircularGauge value={windMs != null ? +(windMs * 2.237).toFixed(1) : null} min={0} max={60} title="Wind Speed" unit="mph" zones={[{end:10,color:"#2dd4bf"},{end:25,color:"#fbbf24"},{end:40,color:"#fb923c"},{end:60,color:"#f87171"}]} labelSteps={[0,15,30,45,60]} hideTitle /> },
+              { w: 260, h: 310, title: "Water Pressure", el: <CircularGauge value={pressurePsi} min={0} max={150} title="Water Pressure" unit="PSI" zones={[{end:70,color:"#22c55e"},{end:100,color:"#fbbf24"},{end:150,color:"#f87171"}]} labelSteps={[0,25,50,75,100,125,150]} hideTitle /> },
+              { w: 260, h: 310, title: "Humidity",       el: <CircularGauge value={humidity} min={0} max={100} title="Humidity" unit="%RH" zones={[{end:30,color:"#fb923c"},{end:80,color:"#2dd4bf"},{end:100,color:"#38bdf8"}]} labelSteps={[0,25,50,75,100]} hideTitle /> },
+            ] as { w: number; h: number; title: string; el: React.ReactNode }[]
+          ).map(({ w, h, title, el }, i) => (
+            <div key={i} className="flex flex-col items-center" style={{ width: w * 0.55, flexShrink: 0 }}>
+              <div className="text-xs font-bold tracking-widest uppercase text-gray-400 mb-1">{title}</div>
+              <div style={{ width: w * 0.55, height: h * 0.55, overflow: "hidden" }}>
+                <div style={{ transform: "scale(0.55)", transformOrigin: "top left", width: w, height: h }}>
+                  {el}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
-
-      {/* Wind direction */}
-      {windCompass && (
-        <div className="card flex items-center gap-4">
-          <div className="text-4xl font-bold text-gray-300">{windCompass}</div>
-          <div>
-            <div className="text-sm text-gray-400">Wind Direction</div>
-            <div className="text-lg font-semibold">{windDeg?.toFixed(0)}°</div>
-          </div>
-        </div>
-      )}
 
       {/* Charts */}
       <div className="card space-y-6">
         <h2 className="text-sm font-medium text-gray-400">Trends (last 60 readings)</h2>
         <SensorChart
           data={envHistory}
-          dataKey="temperature_c"
+          dataKey="temperature_f"
           color="#f97316"
-          label="Temperature (°C)"
+          label="Temperature (°F)"
         />
         <SensorChart
           data={envHistory}
-          dataKey="humidity_percent"
+          dataKey="humidity"
           color="#38bdf8"
           label="Humidity (%)"
         />
@@ -129,9 +140,9 @@ export function Sensors() {
         />
         <SensorChart
           data={flowHistory}
-          dataKey="flow_rate_lpm"
+          dataKey="flow_litres"
           color="#34d399"
-          label="Flow Rate (L/min)"
+          label="Flow Rate (L/s)"
         />
       </div>
     </div>

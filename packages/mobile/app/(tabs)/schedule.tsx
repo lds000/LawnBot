@@ -1,7 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import {
-  View, Text, ScrollView, TouchableOpacity, Switch, Alert, StyleSheet,
+  View, Text, ScrollView, TouchableOpacity, Switch, Alert, StyleSheet, Platform,
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { getSchedule, updateSchedule } from "../../lib/api";
 
@@ -15,6 +16,8 @@ export default function Schedule() {
   const [schedule, setSchedule] = useState<any>(null);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [pickerIndex, setPickerIndex] = useState<number | null>(null);
+  const [pickerDate, setPickerDate] = useState(new Date());
 
   const load = useCallback(async () => {
     try {
@@ -44,6 +47,25 @@ export default function Schedule() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const openTimePicker = (si: number) => {
+    const st = schedule?.start_times?.[si];
+    if (!st) return;
+    const [hh, mm] = st.time.split(":").map(Number);
+    const d = new Date();
+    d.setHours(hh, mm, 0, 0);
+    setPickerDate(d);
+    setPickerIndex(si);
+  };
+
+  const onTimeChange = (_: any, selected?: Date) => {
+    if (Platform.OS === "android") setPickerIndex(null);
+    if (!selected || pickerIndex === null) return;
+    const hh = selected.getHours().toString().padStart(2, "0");
+    const mm = selected.getMinutes().toString().padStart(2, "0");
+    update((sc) => { sc.start_times[pickerIndex].time = `${hh}:${mm}`; return sc; });
+    if (Platform.OS === "android") setPickerIndex(null);
   };
 
   if (!schedule) {
@@ -99,7 +121,10 @@ export default function Schedule() {
         {(schedule.start_times ?? []).map((st: any, si: number) => (
           <View key={si} style={s.startTimeBlock}>
             <View style={s.rowBetween}>
-              <Text style={s.timeText}>{st.time}</Text>
+              <TouchableOpacity onPress={() => openTimePicker(si)} style={s.timeTouchable}>
+                <Text style={s.timeText}>{st.time}</Text>
+                <Ionicons name="pencil" size={14} color={C.muted} style={{ marginLeft: 6 }} />
+              </TouchableOpacity>
               <View style={s.row}>
                 <Switch
                   value={st.enabled}
@@ -179,6 +204,35 @@ export default function Schedule() {
           <Text style={s.value}>{schedule.mist_settings?.duration_seconds ?? 60}s</Text>
         </View>
       </View>
+
+      {/* iOS time picker inline */}
+      {pickerIndex !== null && Platform.OS === "ios" && (
+        <View style={s.iosPickerCard}>
+          <View style={s.rowBetween}>
+            <Text style={s.cardTitle}>Edit Start Time</Text>
+            <TouchableOpacity onPress={() => setPickerIndex(null)}>
+              <Text style={{ color: C.brand, fontWeight: "600" }}>Done</Text>
+            </TouchableOpacity>
+          </View>
+          <DateTimePicker
+            value={pickerDate}
+            mode="time"
+            display="spinner"
+            onChange={onTimeChange}
+            textColor={C.text}
+          />
+        </View>
+      )}
+
+      {/* Android time picker modal */}
+      {pickerIndex !== null && Platform.OS === "android" && (
+        <DateTimePicker
+          value={pickerDate}
+          mode="time"
+          display="default"
+          onChange={onTimeChange}
+        />
+      )}
     </ScrollView>
   );
 }
@@ -198,6 +252,7 @@ const s = StyleSheet.create({
   rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
   row: { flexDirection: "row", alignItems: "center" },
   startTimeBlock: { borderTopWidth: 1, borderTopColor: C.border, paddingTop: 10, marginTop: 8 },
+  timeTouchable: { flexDirection: "row", alignItems: "center" },
   timeText: { color: C.text, fontWeight: "700", fontSize: 17, fontVariant: ["tabular-nums"] },
   setRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 4 },
   dot: { width: 6, height: 6, borderRadius: 3 },
@@ -208,4 +263,5 @@ const s = StyleSheet.create({
   addZoneText: { color: C.brand, fontSize: 13 },
   label: { color: C.muted, fontSize: 14 },
   value: { color: C.text, fontSize: 14, fontWeight: "600" },
+  iosPickerCard: { backgroundColor: C.card, borderRadius: 12, padding: 14, marginBottom: 12, borderColor: C.border, borderWidth: 1 },
 });

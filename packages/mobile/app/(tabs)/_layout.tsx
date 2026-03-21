@@ -1,18 +1,20 @@
+import { View } from "react-native";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import StatusHeader from "../../components/StatusHeader";
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: "#22c55e",
-        tabBarInactiveTintColor: "#6b7280",
-        tabBarStyle: { backgroundColor: "#030712", borderTopColor: "#1f2937" },
-        headerStyle: { backgroundColor: "#030712" },
-        headerTintColor: "#f9fafb",
-        headerTitleStyle: { fontWeight: "700" },
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: "#030712" }}>
+      <StatusHeader />
+      <Tabs
+        screenOptions={{
+          tabBarActiveTintColor: "#22c55e",
+          tabBarInactiveTintColor: "#6b7280",
+          tabBarStyle: { backgroundColor: "#030712", borderTopColor: "#1f2937" },
+          headerShown: false,
+        }}
+      >
       <Tabs.Screen
         name="index"
         options={{
@@ -49,6 +51,25 @@ export default function TabLayout() {
           ),
         }}
       />
-    </Tabs>
+      <Tabs.Screen
+        name="weather"
+        options={{
+          title: "Weather",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="partly-sunny" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: "Settings",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="settings-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      </Tabs>
+    </View>
   );
 }
